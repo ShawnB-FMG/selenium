@@ -136,10 +136,21 @@ namespace OpenQA.Selenium.Remote
         /// <param name="commandExecutor">An <see cref="ICommandExecutor"/> object which executes commands for the driver.</param>
         /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
         public RemoteWebDriver(ICommandExecutor commandExecutor, ICapabilities desiredCapabilities)
+            : this(commandExecutor, desiredCapabilities, RunAsUser.RunAsCurrentUser)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class
+        /// </summary>
+        /// <param name="commandExecutor">An <see cref="ICommandExecutor"/> object which executes commands for the driver.</param>
+        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
+        /// <param name="runAsUser">A <see cref="RunAsUser"/> object containing information about the running user.</param>
+        public RemoteWebDriver(ICommandExecutor commandExecutor, ICapabilities desiredCapabilities, RunAsUser runAsUser)
         {
             this.executor = commandExecutor;
             this.StartClient();
-            this.StartSession(desiredCapabilities);
+            this.StartSession(desiredCapabilities, runAsUser);
             this.mouse = new RemoteMouse(this);
             this.keyboard = new RemoteKeyboard(this);
             this.elementFactory = new RemoteWebElementFactory(this);
@@ -1058,7 +1069,8 @@ namespace OpenQA.Selenium.Remote
         /// Starts a session with the driver
         /// </summary>
         /// <param name="desiredCapabilities">Capabilities of the browser</param>
-        protected void StartSession(ICapabilities desiredCapabilities)
+        /// <param name="runAsUser">A <see cref="RunAsUser"/> object containing information about the running user.</param>
+        protected void StartSession(ICapabilities desiredCapabilities, RunAsUser runAsUser)
         {
             Dictionary<string, object> parameters = new Dictionary<string, object>();
 
@@ -1087,7 +1099,7 @@ namespace OpenQA.Selenium.Remote
                 parameters.Add("capabilities", remoteSettings.ToDictionary());
             }
 
-            Response response = this.Execute(DriverCommand.NewSession, parameters);
+            Response response = this.Execute(DriverCommand.NewSession, parameters, runAsUser);
 
             Dictionary<string, object> rawCapabilities = (Dictionary<string, object>)response.Value;
             ReturnedCapabilities returnedCapabilities = new ReturnedCapabilities(rawCapabilities);
@@ -1144,13 +1156,25 @@ namespace OpenQA.Selenium.Remote
         /// <returns>A <see cref="Response"/> containing information about the success or failure of the command and any data returned by the command.</returns>
         protected virtual Response Execute(string driverCommandToExecute, Dictionary<string, object> parameters)
         {
+            return this.Execute(driverCommandToExecute, parameters, RunAsUser.RunAsCurrentUser);
+        }
+
+        /// <summary>
+        /// Executes a command with this driver .
+        /// </summary>
+        /// <param name="driverCommandToExecute">A <see cref="DriverCommand"/> value representing the command to execute.</param>
+        /// <param name="parameters">A <see cref="Dictionary{K, V}"/> containing the names and values of the parameters of the command.</param>
+        /// <param name="runAsUser">A <see cref="RunAsUser"/> object containing information about the running user.</param>
+        /// <returns>A <see cref="Response"/> containing information about the success or failure of the command and any data returned by the command.</returns>
+        protected virtual Response Execute(string driverCommandToExecute, Dictionary<string, object> parameters, RunAsUser runAsUser)
+        {
             Command commandToExecute = new Command(this.sessionId, driverCommandToExecute, parameters);
 
             Response commandResponse = new Response();
 
             try
             {
-                commandResponse = this.executor.Execute(commandToExecute);
+                commandResponse = this.executor.Execute(commandToExecute, runAsUser);
             }
             catch (System.Net.WebException e)
             {

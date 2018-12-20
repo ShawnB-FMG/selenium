@@ -132,6 +132,17 @@ namespace OpenQA.Selenium.Remote
         /// Executes a command
         /// </summary>
         /// <param name="commandToExecute">The command you wish to execute</param>
+        /// <param name="runAsUser">A <see cref="RunAsUser"/> object containing information about the running user.</param>
+        /// <returns>A response from the browser</returns>
+        public virtual Response Execute(Command commandToExecute, RunAsUser runAsUser)
+        {
+            throw new NotSupportedException($"{nameof(HttpCommandExecutor)} does not support execution as a different user.");
+        }
+
+        /// <summary>
+        /// Executes a command
+        /// </summary>
+        /// <param name="commandToExecute">The command you wish to execute</param>
         /// <returns>A response from the browser</returns>
         public virtual Response Execute(Command commandToExecute)
         {

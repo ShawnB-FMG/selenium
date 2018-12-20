@@ -76,15 +76,33 @@ namespace OpenQA.Selenium.Remote
         /// <returns>A response from the browser</returns>
         public Response Execute(Command commandToExecute)
         {
+            return this.Execute(commandToExecute, RunAsUser.RunAsCurrentUser);
+        }
+
+        /// <summary>
+        /// Executes a command as a specific user
+        /// </summary>
+        /// <param name="commandToExecute">The command you wish to execute</param>
+        /// <param name="runAsUser">A <see cref="RunAsUser"/> object containing information about the running user.</param>
+        /// <returns>A response from the browser</returns>
+        public Response Execute(Command commandToExecute, RunAsUser runAsUser)
+        {
             if (commandToExecute == null)
             {
-                throw new ArgumentNullException("commandToExecute", "Command to execute cannot be null");
+                throw new ArgumentNullException(nameof(commandToExecute), "Command to execute cannot be null");
             }
 
             Response toReturn = null;
             if (commandToExecute.Name == DriverCommand.NewSession)
             {
-                this.service.Start();
+                if (runAsUser.UseCurrentUser)
+                {
+                    this.service.Start();
+                }
+                else
+                {
+                    this.service.StartAsUser(runAsUser.Domain, runAsUser.UserName, runAsUser.Password);
+                }
             }
 
             // Use a try-catch block to catch exceptions for the Quit

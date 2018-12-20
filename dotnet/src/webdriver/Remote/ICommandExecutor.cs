@@ -36,5 +36,13 @@ namespace OpenQA.Selenium.Remote
         /// <param name="commandToExecute">The command you wish to execute</param>
         /// <returns>A response from the browser</returns>
         Response Execute(Command commandToExecute);
+
+        /// <summary>
+        /// Executes a command as a specific user
+        /// </summary>
+        /// <param name="commandToExecute">The command you wish to execute</param>
+        /// <param name="runAsUser">A <see cref="RunAsUser"/> object containing information about the running user.</param>
+        /// <returns>A response from the browser</returns>
+        Response Execute( Command commandToExecute, RunAsUser runAsUser );
     }
 }

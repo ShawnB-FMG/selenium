@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Security;
 using System.Security.Permissions;
 using OpenQA.Selenium.Internal;
 using OpenQA.Selenium.Remote;
@@ -263,6 +264,36 @@ namespace OpenQA.Selenium
             {
                 string msg = "Cannot start the driver service on " + this.ServiceUrl;
                 throw new WebDriverException(msg);
+            }
+        }
+
+        /// <summary>
+        /// Starts the DriverService under a specified user account. (Windows only)
+        /// </summary>
+        [SecurityPermission( SecurityAction.Demand )]
+        public void StartAsUser(string domainName, string userName, SecureString password)
+        {
+            this.driverServiceProcess = new Process();
+
+            this.driverServiceProcess.StartInfo.FileName = Path.Combine( this.driverServicePath, this.driverServiceExecutableName );
+            this.driverServiceProcess.StartInfo.Arguments = this.CommandLineArguments;
+            this.driverServiceProcess.StartInfo.UseShellExecute = false;
+            this.driverServiceProcess.StartInfo.CreateNoWindow = this.hideCommandPromptWindow;
+
+            this.driverServiceProcess.StartInfo.Domain = domainName;
+            this.driverServiceProcess.StartInfo.UserName = userName;
+            this.driverServiceProcess.StartInfo.Password = password;
+
+            DriverProcessStartingEventArgs eventArgs = new DriverProcessStartingEventArgs( this.driverServiceProcess.StartInfo );
+            this.OnDriverProcessStarting( eventArgs );
+
+            this.driverServiceProcess.Start();
+            bool serviceAvailable = this.WaitForServiceInitialization();
+
+            if ( !serviceAvailable )
+            {
+                string msg = "Cannot start the driver service on " + this.ServiceUrl;
+                throw new WebDriverException( msg );
             }
         }
 
